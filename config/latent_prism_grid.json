@@ -1,0 +1,393 @@
+{
+  "schema_id": "latent_prism.configuration_grid.v1",
+  "generation": 1,
+  "lifecycle_stages": [
+    "represented",
+    "applicable",
+    "proposed",
+    "dispatched",
+    "evaluated",
+    "audited",
+    "promoted"
+  ],
+  "parameters": [
+    {
+      "axis_id": "sae_dictionary_width",
+      "kind": "choice",
+      "default": 1024,
+      "choices": [512, 1024, 1536, 2048],
+      "bounds": {
+        "min_value": 512,
+        "max_value": 2048,
+        "expansion_step": 512
+      }
+    },
+    {
+      "axis_id": "matryoshka_coarse_prefix",
+      "kind": "choice",
+      "default": 256,
+      "choices": [128, 256, 384],
+      "bounds": {
+        "min_value": 128,
+        "max_value": 384,
+        "expansion_step": 128
+      }
+    },
+    {
+      "axis_id": "matryoshka_mid_prefix",
+      "kind": "choice",
+      "default": 512,
+      "choices": [256, 512, 768],
+      "bounds": {
+        "min_value": 256,
+        "max_value": 768,
+        "expansion_step": 256
+      }
+    },
+    {
+      "axis_id": "sae_top_k",
+      "kind": "integer_range",
+      "default": 24,
+      "low": 8,
+      "high": 64,
+      "step": 4,
+      "bounds": {
+        "min_value": 8,
+        "max_value": 64,
+        "expansion_step": 16
+      }
+    },
+    {
+      "axis_id": "aux_k_dead_latents",
+      "kind": "integer_range",
+      "default": 48,
+      "low": 16,
+      "high": 128,
+      "step": 8,
+      "bounds": {
+        "min_value": 16,
+        "max_value": 128,
+        "expansion_step": 32
+      }
+    },
+    {
+      "axis_id": "anchor_nullspace_rank",
+      "kind": "integer_range",
+      "default": 32,
+      "low": 8,
+      "high": 64,
+      "step": 8,
+      "bounds": {
+        "min_value": 8,
+        "max_value": 64,
+        "expansion_step": 16
+      }
+    },
+    {
+      "axis_id": "crosscoder_dictionary_width",
+      "kind": "choice",
+      "default": 384,
+      "choices": [256, 384, 512, 768],
+      "bounds": {
+        "min_value": 256,
+        "max_value": 768,
+        "expansion_step": 256
+      }
+    },
+    {
+      "axis_id": "transcoder_dictionary_width",
+      "kind": "choice",
+      "default": 768,
+      "choices": [512, 768, 1024],
+      "bounds": {
+        "min_value": 512,
+        "max_value": 1024,
+        "expansion_step": 256
+      }
+    },
+    {
+      "axis_id": "enable_parallel_grad_projection",
+      "kind": "boolean",
+      "default": true,
+      "bounds": {
+        "min_value": 0,
+        "max_value": 1,
+        "expansion_step": 0
+      }
+    },
+    {
+      "axis_id": "enable_nullspace_guard",
+      "kind": "boolean",
+      "default": true,
+      "bounds": {
+        "min_value": 0,
+        "max_value": 1,
+        "expansion_step": 0
+      }
+    }
+  ],
+  "constraints": [
+    {
+      "constraint_id": "coarse_lt_mid_prefix",
+      "left_axis": "matryoshka_coarse_prefix",
+      "operator": "<",
+      "right_axis": "matryoshka_mid_prefix"
+    },
+    {
+      "constraint_id": "mid_prefix_lt_full_dict",
+      "left_axis": "matryoshka_mid_prefix",
+      "operator": "<",
+      "right_axis": "sae_dictionary_width"
+    },
+    {
+      "constraint_id": "topk_lt_coarse_prefix",
+      "left_axis": "sae_top_k",
+      "operator": "<",
+      "right_axis": "matryoshka_coarse_prefix"
+    },
+    {
+      "constraint_id": "topk_le_auxk",
+      "left_axis": "sae_top_k",
+      "operator": "<=",
+      "right_axis": "aux_k_dead_latents"
+    }
+  ],
+  "regimes": {
+    "residual_dictionary_learning": {
+      "description": "Multi-layer nested Matryoshka TopK + AuxK + JumpReLU sparse dictionary regime",
+      "cell": {
+        "sae_dictionary_width": 1024,
+        "matryoshka_coarse_prefix": 256,
+        "matryoshka_mid_prefix": 512,
+        "sae_top_k": 24,
+        "aux_k_dead_latents": 48,
+        "anchor_nullspace_rank": 32,
+        "crosscoder_dictionary_width": 384,
+        "transcoder_dictionary_width": 768,
+        "enable_parallel_grad_projection": true,
+        "enable_nullspace_guard": true
+      }
+    },
+    "causal_circuit_discovery": {
+      "description": "Cross-layer Procrustes crosscoder and MLP sparse transcoder attribution regime",
+      "cell": {
+        "sae_dictionary_width": 1024,
+        "matryoshka_coarse_prefix": 256,
+        "matryoshka_mid_prefix": 512,
+        "sae_top_k": 20,
+        "aux_k_dead_latents": 48,
+        "anchor_nullspace_rank": 24,
+        "crosscoder_dictionary_width": 384,
+        "transcoder_dictionary_width": 768,
+        "enable_parallel_grad_projection": true,
+        "enable_nullspace_guard": true
+      }
+    },
+    "surgical_nullspace_steering": {
+      "description": "High-retention nullspace-projected steering and zero-hook weight folding regime",
+      "cell": {
+        "sae_dictionary_width": 1024,
+        "matryoshka_coarse_prefix": 256,
+        "matryoshka_mid_prefix": 512,
+        "sae_top_k": 24,
+        "aux_k_dead_latents": 48,
+        "anchor_nullspace_rank": 64,
+        "crosscoder_dictionary_width": 384,
+        "transcoder_dictionary_width": 768,
+        "enable_parallel_grad_projection": true,
+        "enable_nullspace_guard": true
+      }
+    }
+  },
+  "numerical_constants": {
+    "two": 2,
+    "three": 3,
+    "four": 4,
+    "five": 5,
+    "six": 6,
+    "seven": 7,
+    "eight": 8,
+    "ten": 10,
+    "twelve": 12,
+    "sixteen": 16,
+    "twenty_four": 24,
+    "thirty_two": 32,
+    "sixty_four": 64,
+    "hundred": 100,
+    "half": 0.5,
+    "eps": 1e-8,
+    "logit_clip": 25.0,
+    "float_round_digits": 8,
+    "float_fmt_digits": 9,
+    "short_id_chars": 8,
+    "hex_byte_width": 2,
+    "torch_threads": 4,
+    "microseconds_per_second": 1000000.0,
+    "init_scale": 0.08
+  },
+  "backbone_and_corpus_spec": {
+    "model_repo_id": "openai/clip-vit-base-patch32",
+    "hf_cache_rel_dir": ".cache/huggingface/hub/models--openai--clip-vit-base-patch32/snapshots",
+    "model_hint": "clip-vit-base-patch32",
+    "num_layers": 12,
+    "hidden_dim": 512,
+    "mlp_hidden_dim": 2048,
+    "num_heads": 8,
+    "vocab_size_fallback": 4096,
+    "max_seq_len": 64,
+    "quick_gelu_scale": 1.702,
+    "causal_mask_neg_inf": -10000.0,
+    "target_layers": [2, 5, 8, 11],
+    "transcoder_layer": 8,
+    "elk_mid_layers": [5, 8],
+    "elk_late_layer": 11,
+    "extract_batch_size": 48,
+    "pairs_per_contrastive_regime": 24,
+    "prompts_per_persona_archetype": 12,
+    "anchor_prompt_count": 40,
+    "elk_calibration_clean_count": 32,
+    "elk_eval_pair_count": 24,
+    "train_fraction": 0.75,
+    "default_seed": 2026,
+    "evaluation_seeds": [11, 23, 37]
+  },
+  "sae_spec": {
+    "matryoshka_weights": [0.35, 0.30, 0.35],
+    "aux_loss_weight": 0.0625,
+    "dead_step_threshold": 10,
+    "learning_rate": 0.0035,
+    "epochs": 28,
+    "batch_size": 256,
+    "grad_clip_norm": 2.0,
+    "selectivity_top_features": 16,
+    "splitting_top_pool": 12
+  },
+  "crosscoder_transcoder_spec": {
+    "crosscoder_top_k": 20,
+    "crosscoder_lr": 0.0035,
+    "crosscoder_epochs": 26,
+    "crosscoder_batch_size": 256,
+    "transcoder_top_k": 24,
+    "transcoder_lr": 0.0035,
+    "transcoder_epochs": 28,
+    "transcoder_batch_size": 256,
+    "atlas_features_per_layer": 60,
+    "cofire_min_cosine": 0.30,
+    "max_ui_threads": 72,
+    "max_ui_circuit_edges": 48,
+    "patching_top_latents": 16,
+    "patching_pair_count": 32
+  },
+  "probe_and_elk_spec": {
+    "lda_shrinkage": 0.12,
+    "ridge_lambda": 2.5,
+    "logistic_lr": 0.18,
+    "logistic_steps": 90,
+    "sheaf_proj_dim": 28,
+    "sheaf_ridge_lambda": 1.2,
+    "elk_disagreement_weight": 4.0,
+    "conformal_alpha": 0.08,
+    "min_target_coverage": 0.90
+  },
+  "steering_and_gguf_spec": {
+    "steering_layers": [2, 5, 8, 11],
+    "strength_multipliers": [0.2, 0.4, 0.7, 1.0],
+    "default_fold_multiplier": 0.7,
+    "steering_regime": "formal_logic",
+    "steering_eval_count": 16,
+    "anchor_eval_count": 16,
+    "intervened_drift_tolerance": 1e-6,
+    "weight_folding_tolerance": 1e-5,
+    "collateral_penalty_scale": 2.0,
+    "gguf_magic_bytes": [71, 71, 85, 70],
+    "gguf_version": 3,
+    "gguf_alignment": 32,
+    "gguf_type_uint32": 4,
+    "gguf_type_string": 8,
+    "ggml_type_f32": 0,
+    "gguf_kv_count": 3,
+    "gguf_tensor_dims": 1,
+    "f32_byte_size": 4,
+    "u64_byte_size": 8
+  },
+  "portable_exporter_spec": {
+    "sae_cartridge_latents": 24,
+    "out_classes": 2,
+    "parity_eval_samples": 6,
+    "parity_tolerance": 3e-7,
+    "subprocess_timeout_sec": 30,
+    "wgsl_workgroup_size": 64,
+    "glsl_version": 450,
+    "safetensors_header_len_bytes": 8,
+    "wasm_spec": {
+      "magic_bytes": [0, 97, 115, 109],
+      "version_bytes": [1, 0, 0, 0],
+      "page_bytes": 65536,
+      "align_bytes": 16,
+      "f32_bytes": 4,
+      "f64_bytes": 8,
+      "f32_align_log2": 2,
+      "f64_align_log2": 3,
+      "leb_cont_bit": 128,
+      "leb_payload_mask": 127,
+      "leb_sign_bit": 64,
+      "leb_shift": 7,
+      "sec_type": 1,
+      "sec_function": 3,
+      "sec_memory": 5,
+      "sec_export": 7,
+      "sec_code": 10,
+      "sec_data": 11,
+      "type_func": 96,
+      "val_i32": 127,
+      "val_f32": 125,
+      "val_f64": 124,
+      "limits_min_only": 0,
+      "export_func": 0,
+      "export_memory": 2,
+      "func_count": 3,
+      "export_count": 4,
+      "func_idx_input_offset": 0,
+      "func_idx_output_offset": 1,
+      "func_idx_infer": 2,
+      "local_group_count": 2,
+      "local_i32_count": 3,
+      "local_f32_count": 3,
+      "loc_r": 0,
+      "loc_c": 1,
+      "loc_best_idx": 2,
+      "loc_acc": 3,
+      "loc_best_val": 4,
+      "loc_theta": 5,
+      "op_block": 2,
+      "op_loop": 3,
+      "op_if": 4,
+      "op_end": 11,
+      "op_br": 12,
+      "op_br_if": 13,
+      "op_select": 27,
+      "op_local_get": 32,
+      "op_local_set": 33,
+      "op_f32_load": 42,
+      "op_f64_load": 43,
+      "op_f32_store": 56,
+      "op_f64_store": 57,
+      "op_i32_const": 65,
+      "op_f32_const": 67,
+      "op_f64_const": 68,
+      "op_i32_ge_u": 79,
+      "op_f32_gt": 94,
+      "op_f64_gt": 100,
+      "op_i32_add": 106,
+      "op_i32_mul": 108,
+      "op_f32_add": 146,
+      "op_f32_mul": 148,
+      "op_f64_add": 160,
+      "op_f64_mul": 162,
+      "op_f32_demote_f64": 182,
+      "op_f64_promote_f32": 187,
+      "f64_zero_bytes": 8,
+      "block_void": 64
+    }
+  }
+}

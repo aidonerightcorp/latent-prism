@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "latent-prism"
+version = "1.0.0"
+description = "Matryoshka TopK/JumpReLU Sparse Autoencoders, Multi-Layer Crosscoders, MLP Transcoders, Conformal Sheaf Concept Probes, Nullspace-Guarded Activation Steering, GGUF v3 Control Vectors, and 10-Format Portable Cartridges."
+readme = "README.md"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.10"
+authors = [
+  {name = "aidonerightcorp"}
+]
+dependencies = [
+  "numpy>=1.24",
+  "torch>=2.1",
+  "transformers>=4.38",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=7.4",
+]
+
+[project.scripts]
+latent-prism = "latent_prism.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-p no:cacheprovider"
